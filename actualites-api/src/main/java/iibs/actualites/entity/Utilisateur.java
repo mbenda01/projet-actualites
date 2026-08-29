@@ -1,35 +1,30 @@
 package iibs.actualites.entity;
 
 import iibs.actualites.entity.enums.*;
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.*;
+import org.springframework.data.mongodb.core.index.*;
+import org.springframework.data.mongodb.core.mapping.*;
 
 import java.util.*;
 
-@Entity
-@Table(name = "utilisateurs")
+@Document(collection = "utilisateurs")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Utilisateur extends Auditable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "nom", nullable = false, length = 120)
     private String nom;
 
-    @Column(name = "email", nullable = false, unique = true, length = 150)
+    @Indexed(unique = true)
     private String email;
 
-    @Column(name = "mot_de_passe", nullable = false)
     private String motDePasse;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 20)
     private Role role = Role.LECTEUR;
 
-    @Column(name = "actif", nullable = false)
     private boolean actif = true;
 
     private Utilisateur(String nom, String email, String empreinteMotDePasse, Role role) {

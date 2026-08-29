@@ -2,65 +2,54 @@ package iibs.actualites.repository;
 
 import iibs.actualites.entity.*;
 import org.springframework.data.domain.*;
-import org.springframework.data.jpa.repository.*;
-import org.springframework.data.repository.query.*;
+import org.springframework.data.mongodb.repository.*;
 import org.springframework.stereotype.*;
-import org.springframework.transaction.annotation.*;
 
 import java.util.*;
-
+import java.util.stream.*;
 
 @Repository
-public interface FavoriRepository extends JpaRepository<Favori, Long> {
+public interface FavoriRepository extends MongoRepository<Favori, Long> {
 
-    @Query("""
-            SELECT f.article.id FROM Favori f
-            WHERE f.utilisateur.id = :utilisateurId
-            """)
-    Set<Long> listerIdentifiantsArticles(
-            @Param("utilisateurId") Long utilisateurId
-    );
+    @Query("{ 'utilisateur.$id': ?0 }")
+    List<Favori> trouverParUtilisateur(Long utilisateurId);
 
-    @Query(
-            value = """
-                    SELECT f.article FROM Favori f
-                    LEFT JOIN FETCH f.article.auteur
-                    WHERE f.utilisateur.id = :utilisateurId
-                    ORDER BY f.dateEnregistrement DESC
-                    """,
-            countQuery = """
-                    SELECT COUNT(f) FROM Favori f
-                    WHERE f.utilisateur.id = :utilisateurId
-                    """
-    )
-    Page<Article> listerArticles(
-            @Param("utilisateurId") Long utilisateurId,
-            Pageable pageable
-    );
+    @Query(value = "{ 'utilisateur.$id': ?0 }", sort = "{ 'dateEnregistrement': -1 }")
+    List<Favori> trouverParUtilisateurTriePagine(Long utilisateurId, Pageable pageable);
 
-    Optional<Favori> findByUtilisateurIdAndArticleId(
-            Long utilisateurId,
-            Long articleId
-    );
+    @Query("{ 'utilisateur.$id': ?0, 'article.$id': ?1 }")
+    Optional<Favori> findByUtilisateurIdAndArticleId(Long utilisateurId, Long articleId);
 
+    @ExistsQuery("{ 'utilisateur.$id': ?0, 'article.$id': ?1 }")
     boolean existsByUtilisateurIdAndArticleId(Long utilisateurId, Long articleId);
 
-    @Modifying
-    @Transactional
-    @Query("""
-            DELETE FROM Favori f
-            WHERE f.utilisateur.id = :utilisateurId
-              AND f.article.id = :articleId
-            """)
-    int supprimer(
-            @Param("utilisateurId") Long utilisateurId,
-            @Param("articleId") Long articleId
-    );
-
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM Favori f WHERE f.utilisateur.id = :utilisateurId")
-    int supprimerTout(@Param("utilisateurId") Long utilisateurId);
-
+    @CountQuery("{ 'utilisateur.$id': ?0 }")
     long countByUtilisateurId(Long utilisateurId);
+
+    default Set<Long> listerIdentifiantsArticles(Long utilisateurId) {
+        return trouverParUtilisateur(utilisateurId).stream()
+                .map(favori -> favori.getArticle().getId())
+                .collect(Collectors.toSet());
+    }
+
+    default Page<Article> listerArticles(Long utilisateurId, Pageable pageable) {
+        List<Article> articles = trouverParUtilisateurTriePagine(utilisateurId, pageable)
+                .stream()
+                .map(Favori::getArticle)
+                .toList();
+
+        return new PageImpl<>(articles, pageable, countByUtilisateurId(utilisateurId));
+    }
+
+    default int supprimer(Long utilisateurId, Long articleId) {
+        Optional<Favori> favori = findByUtilisateurIdAndArticleId(utilisateurId, articleId);
+        favori.ifPresent(this::delete);
+        return favori.isPresent() ? 1 : 0;
+    }
+
+    default int supprimerTout(Long utilisateurId) {
+        List<Favori> favoris = trouverParUtilisateur(utilisateurId);
+        deleteAll(favoris);
+        return favoris.size();
+    }
 }

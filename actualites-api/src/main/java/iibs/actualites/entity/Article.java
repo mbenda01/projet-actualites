@@ -1,66 +1,45 @@
 package iibs.actualites.entity;
 
 import iibs.actualites.entity.enums.*;
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.*;
+import org.springframework.data.mongodb.core.index.*;
+import org.springframework.data.mongodb.core.mapping.*;
 
 import java.time.*;
 import java.util.*;
 
-@Entity
-@Table(
-        name = "articles",
-        indexes = {
-                @Index(name = "idx_article_statut", columnList = "statut"),
-                @Index(name = "idx_article_categorie", columnList = "categorie"),
-                @Index(name = "idx_article_date_publication", columnList = "date_publication")
-        }
-)
+@Document(collection = "articles")
+@CompoundIndex(name = "idx_article_statut_date", def = "{'statut': 1, 'datePublication': -1}")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Article extends Auditable {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "titre", nullable = false, length = 250)
     private String titre;
 
-    @Column(name = "chapeau", length = 500)
     private String chapeau;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(
-            name = "article_paragraphes",
-            joinColumns = @JoinColumn(name = "article_id")
-    )
-    @OrderColumn(name = "position")
-    @Column(name = "contenu", columnDefinition = "TEXT")
     private List<String> paragraphes = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "categorie", nullable = false, length = 30)
+    @Indexed
     private Categorie categorie = Categorie.GENERAL;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "statut", nullable = false, length = 20)
+    @Indexed
     private StatutArticle statut = StatutArticle.BROUILLON;
 
-    @Column(name = "url_image", length = 500)
     private String urlImage;
 
-    @Column(name = "libelle_image", length = 150)
     private String libelleImage;
 
-    @Column(name = "duree_lecture_minutes")
     private Integer dureeLectureMinutes;
 
-    @Column(name = "date_publication")
+    @Indexed
     private LocalDate datePublication;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "auteur_id", nullable = false)
+    @DBRef
     private Utilisateur auteur;
 
     private Article(String titre, Utilisateur auteur) {

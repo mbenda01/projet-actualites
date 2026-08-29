@@ -38,13 +38,13 @@ public class ArticleServiceImpl implements ArticleService {
 
         } else if (categorie != null) {
             log.debug("Liste des articles publies, categorie {}", categorie);
-            articles = articleRepository.rechercherParStatutEtCategorie(
+            articles = articleRepository.findByStatutAndCategorie(
                     StatutArticle.PUBLIE, categorie, pageable);
 
         } else {
             log.debug("Liste des articles publies, page {}",
                     pageable.getPageNumber());
-            articles = articleRepository.rechercherParStatut(
+            articles = articleRepository.findByStatut(
                     StatutArticle.PUBLIE, pageable);
         }
 
@@ -139,9 +139,11 @@ public class ArticleServiceImpl implements ArticleService {
                 dto.libelleImage(),
                 dto.dureeLectureMinutes());
 
+        Article enregistre = articleRepository.save(article);
+
         log.info("Article modifie : id={}", id);
 
-        return articleMapper.versDetail(article);
+        return articleMapper.versDetail(enregistre);
     }
 
     @Override
@@ -160,9 +162,11 @@ public class ArticleServiceImpl implements ArticleService {
             throw new ConflitMetierException(exception.getMessage());
         }
 
+        Article enregistre = articleRepository.save(article);
+
         log.info("Statut de l'article id={} : {} -> {}", id, ancien, statut);
 
-        return articleMapper.versDetail(article);
+        return articleMapper.versDetail(enregistre);
     }
 
     @Override
@@ -177,6 +181,8 @@ public class ArticleServiceImpl implements ArticleService {
         } catch (IllegalStateException exception) {
             throw new ConflitMetierException(exception.getMessage());
         }
+
+        articleRepository.save(article);
 
         log.info("Article archive : id={}", id);
     }

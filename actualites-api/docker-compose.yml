@@ -1,41 +1,22 @@
-# ============================================================
-# Base de donnees PostgreSQL pour l'API Actualites
-#
-# Port 5434 cote hote : 5432 et 5433 sont deja occupes par
-# d'autres projets sur cette machine. Le conteneur ecoute
-# toujours sur 5432 en interne.
-#
-# L'image postgres:16-alpine est deja presente localement :
-# aucun telechargement n'est necessaire.
-#
-# Le volume nomme conserve les donnees entre les redemarrages :
-# sans lui, chaque `docker compose down` viderait la base.
-# ============================================================
-
 services:
   actualites-db:
-    image: postgres:16-alpine
+    image: mongo:7
     container_name: actualites-db
     restart: unless-stopped
 
     environment:
-      POSTGRES_DB: actualites_db
-      POSTGRES_USER: actualites_user
-      POSTGRES_PASSWORD: actualites_pass
-      # Encodage explicite : evite les surprises sur les
-      # caracteres accentues des articles.
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      MONGO_INITDB_ROOT_USERNAME: actualites_user
+      MONGO_INITDB_ROOT_PASSWORD: actualites_pass
+      MONGO_INITDB_DATABASE: actualites_db
 
     ports:
-      - "5434:5432"
+      - "27018:27017"
 
     volumes:
-      - actualites-data:/var/lib/postgresql/data
+      - actualites-data:/data/db
 
-    # Permet a d'autres conteneurs d'attendre que la base soit
-    # reellement prete, pas seulement demarree.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U actualites_user -d actualites_db"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
