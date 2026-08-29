@@ -6,7 +6,7 @@ import 'blocs/auth/auth_state.dart';
 import 'blocs/theme/theme_cubit.dart';
 import 'di/injection_widget.dart';
 import 'routes/app_routes.dart';
-import 'screens/coquille_principale.docker dart';
+import 'screens/coquille_principale.dart';
 import 'screens/ecran_connexion.dart';
 import 'theme/app_theme.dart';
 
