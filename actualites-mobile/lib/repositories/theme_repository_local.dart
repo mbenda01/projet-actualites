@@ -1,29 +1,30 @@
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/preference_theme.dart';
 import 'theme_repository.dart';
 
 class ThemeRepositoryLocal implements ThemeRepository {
-  static const String _cle = 'theme.mode';
+  static const String _cle = 'theme.preference';
 
   const ThemeRepositoryLocal();
 
   @override
-  Future<ThemeMode> charger() async {
+  Future<PreferenceTheme> charger() async {
     final prefs = await SharedPreferences.getInstance();
 
     final nom = prefs.getString(_cle);
-    if (nom == null) return ThemeMode.system;
+    if (nom == null) return PreferenceTheme.automatique;
 
-    for (final mode in ThemeMode.values) {
-      if (mode.name == nom) return mode;
+    for (final preference in PreferenceTheme.values) {
+      if (preference.name == nom) return preference;
     }
 
-    return ThemeMode.system;
+    return PreferenceTheme.automatique;
   }
 
   @override
-  Future<void> enregistrer(ThemeMode mode) async {
+  Future<void> enregistrer(PreferenceTheme preference) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_cle, mode.name);
+    await prefs.setString(_cle, preference.name);
   }
 }

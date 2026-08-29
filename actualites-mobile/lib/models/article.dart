@@ -87,6 +87,23 @@ class Article extends Equatable {
     };
   }
 
+  Map<String, dynamic> versJsonCache() {
+    return {
+      'id': id,
+      'titre': titre,
+      'chapeau': chapeau,
+      'paragraphes': paragraphes,
+      'categorie': categorie.code,
+      'statut': statut.code,
+      'urlImage': urlImage,
+      'libelleImage': libelleImage,
+      'dureeLectureMinutes': dureeLectureMinutes,
+      'datePublication': datePublication?.toIso8601String(),
+      'auteurId': auteurId,
+      'auteurNom': auteurNom,
+    };
+  }
+
   static int? _lireEntier(Object? valeur) {
     if (valeur is int) return valeur;
     if (valeur is num) return valeur.toInt();

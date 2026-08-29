@@ -8,7 +8,9 @@ import '../blocs/favoris/favoris_bloc.dart';
 import '../blocs/favoris/favoris_event.dart';
 import '../blocs/favoris/favoris_state.dart';
 import '../blocs/theme/theme_cubit.dart';
+import '../models/preference_theme.dart';
 import '../routes/app_routes.dart';
+import '../services/synchronisation_service.dart';
 import '../widgets/barre_retour.dart';
 
 class PageReglages extends StatelessWidget {
@@ -33,6 +35,7 @@ class PageReglages extends StatelessWidget {
 
           _construireTitreSection(context, 'Données'),
           _construireLigneFavoris(context),
+          _construireLigneSynchronisation(context),
 
           const Divider(height: 32),
 
@@ -92,21 +95,21 @@ class PageReglages extends StatelessWidget {
   }
 
   Widget _construireSelecteurTheme(BuildContext context) {
-    return BlocBuilder<ThemeCubit, ThemeMode>(
-      builder: (context, modeActif) {
+    return BlocBuilder<ThemeCubit, EtatTheme>(
+      builder: (context, etatTheme) {
         return Column(
-          children: ThemeMode.values.map((mode) {
-            return RadioListTile<ThemeMode>(
-              value: mode,
-              groupValue: modeActif,
+          children: PreferenceTheme.values.map((preference) {
+            return RadioListTile<PreferenceTheme>(
+              value: preference,
+              groupValue: etatTheme.preference,
               onChanged: (choisi) {
                 if (choisi != null) context.read<ThemeCubit>().changer(choisi);
               },
-              title: Text(ThemeCubit.libelleDe(mode)),
-              subtitle: mode == ThemeMode.system
-                  ? const Text('Suit le réglage du téléphone')
+              title: Text(ThemeCubit.libelleDe(preference)),
+              subtitle: preference == PreferenceTheme.automatique
+                  ? const Text('Sombre de 22h à 7h, clair le reste du temps')
                   : null,
-              secondary: Icon(_iconeDe(mode)),
+              secondary: Icon(_iconeDe(preference)),
             );
           }).toList(),
         );
@@ -114,13 +117,13 @@ class PageReglages extends StatelessWidget {
     );
   }
 
-  IconData _iconeDe(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.system:
+  IconData _iconeDe(PreferenceTheme preference) {
+    switch (preference) {
+      case PreferenceTheme.automatique:
         return Icons.brightness_auto;
-      case ThemeMode.light:
+      case PreferenceTheme.clair:
         return Icons.light_mode;
-      case ThemeMode.dark:
+      case PreferenceTheme.sombre:
         return Icons.dark_mode;
     }
   }
@@ -144,6 +147,24 @@ class PageReglages extends StatelessWidget {
       },
     );
   }
+
+  Widget _construireLigneSynchronisation(BuildContext context) {
+    return ListTile(
+      leading: const Icon(Icons.sync),
+      title: const Text('Synchroniser les favoris'),
+      subtitle: const Text('Rejoue les actions faites hors-ligne'),
+      onTap: () async {
+        final service = context.read<SynchronisationService>();
+        await service.synchroniser();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Synchronisation effectuée')),
+          );
+        }
+      },
+    );
+  }
+
 
   Future<void> _confirmerSuppression(BuildContext context) async {
     final bloc = context.read<FavorisBloc>();

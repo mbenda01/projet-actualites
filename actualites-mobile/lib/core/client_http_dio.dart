@@ -1,40 +1,84 @@
 import 'package:dio/dio.dart';
 
+import 'client_http_interface.dart';
 import 'erreur_api.dart';
 import 'journal.dart';
 import '../models/jetons.dart';
 import '../repositories/jeton_repository.dart';
 
-final dioOptionsPubliques = Options(
+final _optionsPubliques = Options(
   extra: {'ignorerAuthentification': true},
 );
 
-class ClientHttp {
-  static const String _origine = 'ClientHttp';
+class ClientHttpDio implements ClientHttpInterface {
+  static const String _origine = 'ClientHttpDio';
 
-  final Dio dio;
+  final Dio _dio;
   final JetonRepository _depotJetons;
   final Journal _journal;
 
   Future<Jetons?>? _rafraichissementEnCours;
 
-  ClientHttp({
+  ClientHttpDio({
     required String urlBase,
     required JetonRepository depotJetons,
     required Journal journal,
+    Dio? dio,
   })  : _depotJetons = depotJetons,
         _journal = journal,
-        dio = Dio(BaseOptions(
-          baseUrl: urlBase,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-        )) {
-    dio.interceptors.add(
+        _dio = dio ??
+            Dio(BaseOptions(
+              baseUrl: urlBase,
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 10),
+            )) {
+    _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: _surRequete,
         onError: _surErreur,
       ),
     );
+  }
+
+  @override
+  Future<dynamic> requete(
+    MethodeHttp methode,
+    String chemin, {
+    dynamic donnees,
+    Map<String, dynamic>? parametres,
+    bool authentifie = true,
+  }) async {
+    final options = authentifie ? null : _optionsPubliques;
+
+    final Response reponse = switch (methode) {
+      MethodeHttp.get => await _dio.get(
+          chemin,
+          queryParameters: parametres,
+          options: options,
+        ),
+      MethodeHttp.post => await _dio.post(
+          chemin,
+          data: donnees,
+          options: options,
+        ),
+      MethodeHttp.put => await _dio.put(
+          chemin,
+          data: donnees,
+          options: options,
+        ),
+      MethodeHttp.patch => await _dio.patch(
+          chemin,
+          data: donnees,
+          options: options,
+        ),
+      MethodeHttp.delete => await _dio.delete(
+          chemin,
+          data: donnees,
+          options: options,
+        ),
+    };
+
+    return reponse.data;
   }
 
   Future<void> _surRequete(
@@ -81,7 +125,7 @@ class ClientHttp {
     }
 
     try {
-      final nouvelleRequete = await dio.fetch(requete
+      final nouvelleRequete = await _dio.fetch(requete
         ..headers['Authorization'] = nouveauxJetons.enTeteAutorisation
         ..extra['rafraichissementTente'] = true);
 
@@ -101,10 +145,10 @@ class ClientHttp {
 
       if (jetonsActuels == null) return null;
 
-      final reponse = await dio.post(
+      final reponse = await _dio.post(
         '/api/auth/rafraichissement',
         data: {'jetonRafraichissement': jetonsActuels.jetonRafraichissement},
-        options: dioOptionsPubliques,
+        options: _optionsPubliques,
       );
 
       final donnees = reponse.data['data'] as Map<String, dynamic>;
@@ -124,6 +168,7 @@ class ClientHttp {
     }
   }
 
+  @override
   ErreurApi traduireErreur(Object erreur) {
     if (erreur is! DioException) {
       return ErreurInconnue(erreur.toString());

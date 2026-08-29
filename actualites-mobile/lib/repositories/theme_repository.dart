@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+import '../models/preference_theme.dart';
 
 abstract class ThemeRepository {
-  Future<ThemeMode> charger();
+  Future<PreferenceTheme> charger();
 
-  Future<void> enregistrer(ThemeMode mode);
+  Future<void> enregistrer(PreferenceTheme preference);
 }

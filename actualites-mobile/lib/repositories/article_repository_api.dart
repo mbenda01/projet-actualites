@@ -1,13 +1,14 @@
-import '../core/client_http.dart';
+import '../core/client_http_interface.dart';
 import '../models/article.dart';
 import '../models/enums.dart';
 import '../models/page_resultat.dart';
+import 'api_repository_base.dart';
 import 'article_repository.dart';
 
-class ArticleRepositoryApi implements ArticleRepository {
-  final ClientHttp _client;
-
-  const ArticleRepositoryApi({required ClientHttp client}) : _client = client;
+class ArticleRepositoryApi extends ApiRepositoryBase
+    implements ArticleRepository {
+  const ArticleRepositoryApi({required ClientHttpInterface client})
+      : super(client: client);
 
   @override
   Future<PageResultat<Article>> listerPublies({
@@ -15,121 +16,90 @@ class ArticleRepositoryApi implements ArticleRepository {
     String? recherche,
     int page = 0,
     int taille = 20,
-  }) async {
-    try {
-      final reponse = await _client.dio.get(
+  }) {
+    return executer(
+      () => client.get(
         '/api/articles',
-        queryParameters: {
+        authentifie: false,
+        parametres: {
           'page': page,
           'size': taille,
           if (categorie != null) 'categorie': categorie.code,
           if (recherche != null && recherche.isNotEmpty) 'recherche': recherche,
         },
-        options: dioOptionsPubliques,
-      );
-
-      return PageResultat.depuisJson(
-        reponse.data['data'] as Map<String, dynamic>,
+      ),
+      (donnees) => PageResultat.depuisJson(
+        donnees as Map<String, dynamic>,
         Article.depuisJson,
-      );
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+      ),
+    );
   }
 
   @override
   Future<PageResultat<Article>> listerTous({
     int page = 0,
     int taille = 20,
-  }) async {
-    try {
-      final reponse = await _client.dio.get(
+  }) {
+    return executer(
+      () => client.get(
         '/api/articles/administration',
-        queryParameters: {'page': page, 'size': taille},
-      );
-
-      return PageResultat.depuisJson(
-        reponse.data['data'] as Map<String, dynamic>,
+        parametres: {'page': page, 'size': taille},
+      ),
+      (donnees) => PageResultat.depuisJson(
+        donnees as Map<String, dynamic>,
         Article.depuisJson,
-      );
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+      ),
+    );
   }
 
   @override
-  Future<Article> obtenirPublie(int id) async {
-    try {
-      final reponse = await _client.dio.get(
-        '/api/articles/$id',
-        options: dioOptionsPubliques,
-      );
-
-      return Article.depuisJson(reponse.data['data'] as Map<String, dynamic>);
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+  Future<Article> obtenirPublie(int id) {
+    return executer(
+      () => client.get('/api/articles/$id', authentifie: false),
+      (donnees) => Article.depuisJson(donnees as Map<String, dynamic>),
+    );
   }
 
   @override
-  Future<Article> obtenirParId(int id) async {
-    try {
-      final reponse = await _client.dio.get('/api/articles/administration/$id');
-
-      return Article.depuisJson(reponse.data['data'] as Map<String, dynamic>);
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+  Future<Article> obtenirParId(int id) {
+    return executer(
+      () => client.get('/api/articles/administration/$id'),
+      (donnees) => Article.depuisJson(donnees as Map<String, dynamic>),
+    );
   }
 
   @override
-  Future<Article> creer(Article article) async {
-    try {
-      final reponse = await _client.dio.post(
-        '/api/articles',
-        data: article.versJson(),
-      );
-
-      return Article.depuisJson(reponse.data['data'] as Map<String, dynamic>);
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+  Future<Article> creer(Article article) {
+    return executer(
+      () => client.post('/api/articles', donnees: article.versJson()),
+      (donnees) => Article.depuisJson(donnees as Map<String, dynamic>),
+    );
   }
 
   @override
-  Future<Article> modifier(int id, Article article) async {
-    try {
-      final reponse = await _client.dio.put(
-        '/api/articles/$id',
-        data: article.versJson(),
-      );
-
-      return Article.depuisJson(reponse.data['data'] as Map<String, dynamic>);
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+  Future<Article> modifier(int id, Article article) {
+    return executer(
+      () => client.put('/api/articles/$id', donnees: article.versJson()),
+      (donnees) => Article.depuisJson(donnees as Map<String, dynamic>),
+    );
   }
 
   @override
-  Future<Article> changerStatut(int id, StatutArticle statut) async {
-    try {
-      final reponse = await _client.dio.patch(
+  Future<Article> changerStatut(int id, StatutArticle statut) {
+    return executer(
+      () => client.patch(
         '/api/articles/$id/statut',
-        data: {'statut': statut.code},
-      );
-
-      return Article.depuisJson(reponse.data['data'] as Map<String, dynamic>);
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+        donnees: {'statut': statut.code},
+      ),
+      (donnees) => Article.depuisJson(donnees as Map<String, dynamic>),
+    );
   }
 
   @override
-  Future<void> archiver(int id) async {
-    try {
-      await _client.dio.delete('/api/articles/$id');
-    } catch (erreur) {
-      throw _client.traduireErreur(erreur);
-    }
+  Future<void> archiver(int id) {
+    return executer(
+      () => client.delete('/api/articles/$id'),
+      (_) {},
+    );
   }
 }
