@@ -14,9 +14,6 @@ public class OpenApiConfig {
 
     private static final String SCHEMA_JWT = "bearerAuth";
 
-    @Value("${server.port:8080}")
-    private int port;
-
     @Bean
     public OpenAPI documentationApi() {
         return new OpenAPI()
@@ -35,12 +32,6 @@ public class OpenApiConfig {
                                 .email("contact@iibs.sn"))
                         .license(new License()
                                 .name("Usage pedagogique")))
-
-                .servers(List.of(
-                        new Server()
-                                .url("http://localhost:" + port)
-                                .description("Environnement local")
-                ))
 
                 .addSecurityItem(new SecurityRequirement().addList(SCHEMA_JWT))
 
