@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../blocs/auth/auth_bloc.dart';
+import '../blocs/auth/auth_state.dart';
 import '../routes/app_routes.dart';
 
 class _EntreeMenu {
@@ -41,27 +45,44 @@ class MenuLateral extends StatelessWidget {
     _EntreeMenu(Icons.info_outline, 'À propos', route: Routes.aPropos),
   ];
 
+  static const _EntreeMenu _entreeAdministration = _EntreeMenu(
+    Icons.edit_note,
+    'Gestion des articles',
+    route: Routes.administration,
+  );
+
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          _construireEntete(context),
-          ..._entrees.map((entree) => _construireEntree(context, entree)),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Déconnexion'),
-            onTap: () => Navigator.pop(context),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, etatAuth) {
+        final estAdmin = etatAuth is AuthAuthentifie && etatAuth.utilisateur.estAdmin;
+
+        return Drawer(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _construireEntete(context, etatAuth),
+              ..._entrees.map((entree) => _construireEntree(context, entree)),
+              if (estAdmin) ...[
+                const Divider(),
+                _construireEntree(context, _entreeAdministration),
+              ],
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Déconnexion'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _construireEntete(BuildContext context) {
+  Widget _construireEntete(BuildContext context, AuthState etatAuth) {
     final couleurs = Theme.of(context).colorScheme;
+    final email = etatAuth is AuthAuthentifie ? etatAuth.utilisateur.email : '';
 
     return DrawerHeader(
       decoration: BoxDecoration(color: couleurs.primary),
@@ -84,7 +105,7 @@ class MenuLateral extends StatelessWidget {
             ),
           ),
           Text(
-            'lecteur@exemple.com',
+            email,
             style: TextStyle(
               color: couleurs.onPrimary.withValues(alpha: 0.75),
               fontSize: 13,

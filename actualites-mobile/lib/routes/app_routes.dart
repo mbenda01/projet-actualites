@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/article.dart';
 import '../screens/ecran_connexion.dart';
 import '../screens/ecran_detail_article.dart';
+import '../screens/ecran_edition_article.dart';
 import '../screens/page_a_propos.dart';
+import '../screens/page_administration.dart';
 import '../screens/page_reglages.dart';
 
 class Routes {
@@ -14,11 +16,14 @@ class Routes {
   static const String detailArticle = '/article';
   static const String reglages = '/reglages';
   static const String aPropos = '/a-propos';
+  static const String administration = '/administration';
+  static const String editionArticle = '/administration/edition';
 
   static Map<String, WidgetBuilder> get table => {
         connexion: (context) => const EcranConnexion(),
         reglages: (context) => const PageReglages(),
         aPropos: (context) => const PageAPropos(),
+        administration: (context) => const PageAdministration(),
       };
 
   static Route<dynamic>? generer(RouteSettings parametres) {
@@ -30,6 +35,16 @@ class Routes {
 
         return MaterialPageRoute(
           builder: (context) => EcranDetailArticle(article: argument),
+          settings: parametres,
+        );
+
+      case editionArticle:
+        final argument = parametres.arguments;
+
+        return MaterialPageRoute(
+          builder: (context) => EcranEditionArticle(
+            article: argument is Article ? argument : null,
+          ),
           settings: parametres,
         );
 

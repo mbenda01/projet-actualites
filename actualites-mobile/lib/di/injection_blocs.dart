@@ -11,11 +11,12 @@ import '../blocs/auth/auth_event.dart';
 import '../blocs/articles/articles_bloc.dart';
 import '../blocs/favoris/favoris_bloc.dart';
 import '../blocs/theme/theme_cubit.dart';
+import '../blocs/administration/administration_bloc.dart';
 
 class InjectionBlocs {
   InjectionBlocs._();
 
-    static List<BlocProvider> get fournisseurs => [
+  static List<BlocProvider> get fournisseurs => [
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(
             depot: context.read<AuthRepository>(),
@@ -40,6 +41,12 @@ class InjectionBlocs {
             depot: context.read<ThemeRepository>(),
             journal: context.read<Journal>(),
           )..charger(),
+        ),
+        BlocProvider<AdministrationBloc>(
+          create: (context) => AdministrationBloc(
+            depot: context.read<ArticleRepository>(),
+            journal: context.read<Journal>(),
+          ),
         ),
       ];
 }

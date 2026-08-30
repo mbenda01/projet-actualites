@@ -15,7 +15,7 @@ import '../repositories/theme_repository.dart';
 import '../repositories/theme_repository_local.dart';
 import '../services/synchronisation_service.dart';
 
-const String urlBaseApi = 'http://10.0.2.2:8080';
+const String urlBaseApi = 'https://projet-actualites.onrender.com';
 
 class InjectionDepots {
   final Journal journal;
